@@ -54,6 +54,11 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    'student_url' => env('STUDENT_HOST', 'http://127.0.0.1:8001/api'),
+
+    'teacher_url' => env('TEACHER_HOST', 'http://127.0.0.1:8002/api'),
+
+
     'asset_url' => env('ASSET_URL', null),
 
     /*

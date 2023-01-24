@@ -31,7 +31,7 @@ class NewStudentAssignedNotification extends Notification
      */
     public function via($notifiable)
     {
-        return ['mail'];
+        return ['mail','database'];
     }
 
     /**
@@ -43,7 +43,9 @@ class NewStudentAssignedNotification extends Notification
     public function toMail($notifiable)
     {
         return (new MailMessage)
-                    ->line($this->details['message']);
+                    ->line('A new student has been assigned to you.')
+                    ->line('Name: '.$this->details['name'])
+                    ->line('Email: '.$this->details['email']);
     }
 
     /**
@@ -55,7 +57,8 @@ class NewStudentAssignedNotification extends Notification
     public function toArray($notifiable)
     {
         return [
-            //
+            'message' => 'A new student has been assigned to you.',
+            'student_name' => $this->details['name']
         ];
     }
 }

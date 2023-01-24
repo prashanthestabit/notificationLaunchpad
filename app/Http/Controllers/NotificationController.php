@@ -6,6 +6,9 @@ use Illuminate\Http\Request;
 use App\Notifications\NewStudentAssignedNotification;
 use Illuminate\Support\Facades\Notification;
 use App\Models\Notifications;
+use Illuminate\Support\Facades\Http;
+use App\Models\User;
+use Illuminate\Support\Facades\Log;
 
 class NotificationController extends Controller
 {
@@ -13,34 +16,33 @@ class NotificationController extends Controller
     public function store(Request $request)
     {
         try{
+            $header = $request->header('Authorization');
+            if(empty($header))
+            {
+                return response()->json(['error' => 'Unauthorized'], 401);
+            }
 
-            \Log::info($request['student']);
-            \Log::info($request['teacher']);
+            $studentUrl = config('app.student_url').'/user/'.$request->input('user_id');
 
-            $teacher = $request['teacher'];
-            $student = $request['student'];
+            $student = Http::withHeaders([
+                'Authorization' => $header,
+                ])->get($studentUrl);
 
-            $email = (isset($teacher['email']))?$teacher['email']:'';
 
-            $details = [
-                'message' => 'A new student has been assigned to you.',
-            ];
+            if($student->status() === 200 && $student->json('user'))
+            {
+                $studentDetails = $student->json('user');
+                $teacherDetails = User::find($request->input('teacher_id'));
 
-            //Notification::route('mail',$email)->notify(new NewStudentAssignedNotification($details));
 
-            Notifications::create([
-                'id'   => '993b6f5f-7e28-4fe6-a6a6-a031e221d31f',
-                'type' => 'App\Notifications\NewStudentAssignedNotification',
-                'notifiable_type' => 'App\Models\User',
-                'notifiable_id' =>$teacher['id'],
-                'data' => json_encode($details),
-                'created_at'=> now()
-            ]);
+                $teacherDetails->notify(new NewStudentAssignedNotification($studentDetails));
+                Log::info("Notification Send");
+            }
 
            return true;
 
         }catch (\Exception $e) {
-            \Log::error($e->getMessage());
+            Log::error($e->getMessage());
             return response()->json(['error' => __('messages.error')], 500);
         }
     }
